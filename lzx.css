@@ -21,8 +21,8 @@ span{
     color: blueviolet;
     font-weight: 900;
 }
-h1{
-    font-size: 80px;
-    color: rgb(63, 187, 156);
+#name{
+    font-size: 100px;
+    color: rgb(165, 37, 154);
     font-weight: 900;
 }
