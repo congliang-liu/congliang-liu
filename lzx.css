@@ -1,0 +1,23 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+.box{
+    height: 728px;
+    width: 1500px;
+    background-color: rgb(20, 181, 221);
+}
+img{
+    float: left;
+}
+p{
+    margin-bottom: 25%;
+    color: brown;
+    font-size: 32px;
+    font-weight: 900;
+}
+span{
+    font-size: 80px;
+    color: blueviolet;
+    font-weight: 900;
+}
