@@ -1,0 +1,752 @@
+
+<!doctype html>
+<html>
+
+<head>
+  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+  <title>全境征才计算器</title>
+  <meta name='keywords' content='天下布魔'>
+  <meta name='description' content='3.9 作者 小r 新词条募集中'>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <style>
+    #center_box {
+      margin: 0 auto;
+      width: 90%;
+    }
+
+    .btn {
+      height: 70px;
+      font-size: 50px;
+      width: 32%;
+      border-radius: 20px;
+      margin: 5px 2px;
+      box-shadow: 0 1px rgb(98, 127, 140);
+      line-height: 100%;
+    }
+
+    .btn_normal {
+      color: rgb(80, 80, 109);
+      background-image: linear-gradient(rgb(255, 255, 255), rgb(240, 240, 240))
+      
+    }
+
+    .btn_language {
+      height: 40px;
+      width: 25%;
+      font-size: 30px;
+      border-radius: 20px;
+      margin-right: 2%;
+      box-shadow: 0 1px rgb(98, 127, 140);
+      line-height: 100%;
+      float: right
+    }
+
+    .btn_hint {
+      color: rgb(80, 80, 109);
+      background-image: linear-gradient(rgb(255, 255, 255), rgb(240, 240, 240), 
+      rgb(151, 191, 211), rgb(74, 163, 209));
+      background-size: 100% 300%;
+      animation: normal2hint 0.15s ease 1;
+      background-position: 0% 45%;
+    }
+
+    .btn_clicked {
+      color: white;
+      background-image: linear-gradient(rgb(255, 255, 255), rgb(240, 240, 240), 
+      rgb(151, 191, 211), rgb(74, 163, 209));
+      background-size: 100% 300%;
+      animation: blink 0.3s ease 1;
+      background-position: 0% 95%;
+    }
+
+    /* 点击按钮后的闪烁动画（有点丑） */
+    @keyframes blink
+    {
+      0% {
+        color: rgb(80, 80, 109);
+        background-position: 0% 66%;
+      }
+      100% {
+        color: white;
+        background-position: 0% 95%;
+      }
+    }
+
+    @keyframes normal2hint {
+      0% {
+        background-position: 0% 0%;
+      }
+      100% {
+        background-position: 0% 45%;
+      }
+    }
+
+    .btn_resetAllTags {
+      width: 100%;
+      color: white;
+      background-color: rgb(236, 91, 85)
+    }
+
+    table {
+      width: 100%;
+      font-size: 30px;
+      border-radius: 25px;
+    }
+
+    thead {
+      background-color: #065279;
+      color: white;
+      font-size: 40px;
+    }
+
+    table tr th:first-child{width:130px;}
+    table tr:first-child th:first-child {
+      border-top-left-radius: 10px;
+    }
+
+    table tr:first-child th:last-child {
+      border-top-right-radius: 10px;
+    }
+
+    table tr:last-child td:first-child {
+      border-bottom-left-radius: 10px;
+    }
+
+    table tr:last-child td:last-child {
+      border-bottom-right-radius: 10px;
+    }
+
+    .pc-style {
+      width: 80%;
+      zoom: 0.55;
+      margin: 0 auto;
+    }
+    
+    #anotation {
+      font-size: 25px;
+      margin: 20px;
+      border: 1px solid #065279;
+      border-radius: 10px;
+      padding: 10px;
+    }
+  </style>
+
+  <script type="text/javascript">
+
+    var tags = [];  //收集当前选中的tag
+    var ans = [];   //收集最后的结果
+    var propheticWords = [];  //收集固有词条组合模式用于预测
+    window.onload = function () {
+      // 调整屏幕宽度，如果是电脑把字调小一点
+      getDevice()
+      initPropheticWords() //初始化词条预言系统
+      initST()
+
+      var wordBtns = document.getElementsByClassName('btn_normal btn');
+      for (var i = 0; i < wordBtns.length; i++) {
+        wordBtns[i].className = 'btn_normal btn';
+        wordBtns[i].onclick = function () {
+          if (this.className == 'btn_normal btn' || this.className == 'btn_hint btn') {
+            this.className = 'btn_clicked btn';
+          } else {
+            this.className = 'btn_normal btn';
+          }
+          searchAndShow();
+        }
+      }
+    }
+
+    function getDevice() {
+      var agent = navigator.userAgent.toLowerCase();
+      var result = {
+        device: function () {
+          if (/windows/.test(agent)) {
+            var $body = document.getElementById('body')
+            $body.classList.add('pc-style');
+            return 'windows pc';
+          } else {
+            return 'other';
+          }
+        }(),
+      };
+      return result;
+    }
+
+    function initPropheticWords() {
+      propheticWords = propheticWords.map(w => w.split(','));
+    }
+
+    /***********************************繁简转换相关代码**************************************/
+    function initST() {
+      var lang = getQueryVariable("lang")
+      var lang2 = getCookie("tkbmLang")
+      if (lang == "T" || lang2 == "T") {
+        s2t()
+        s2tSet(propheticWords)
+        s2tSet(dataset)
+      }
+    }
+
+    function switchST() {
+      var lang = getQueryVariable("lang")
+      var lang2 = getCookie("tkbmLang")
+      if (lang == "T" || lang2 == "T") {
+        addCookie("tkbmLang", "S", 999)
+        window.location.href = window.location.href.split('?')[0];
+      } else {
+        addCookie("tkbmLang", "T", 999)
+        window.location.href = window.location.href.split('&')[0] + "?lang=T";
+      }
+    }
+
+
+    /**********************************缓存相关代码***********************************/
+    //写Cookie
+    function addCookie(objName, objValue, objHours) {
+      var str = objName + "=" + escape(objValue); //编码
+      if (objHours > 0) {//为0时不设定过期时间，浏览器关闭时cookie自动消失
+        var date = new Date();
+        var ms = objHours * 3600 * 1000;
+        date.setTime(date.getTime() + ms);
+        str += "; expires=" + date.toGMTString();
+      }
+      document.cookie = str;
+    }
+
+    //读Cookie
+    function getCookie(objName) {//获取指定名称的cookie的值
+      var arrStr = document.cookie.split("; ");
+      for (var i = 0; i < arrStr.length; i++) {
+        var temp = arrStr[i].split("=");
+        if (temp[0] == objName) return unescape(temp[1]);  //解码
+      }
+      return "";
+    }
+
+    function getQueryVariable(variable) {
+      var query = window.location.search.substring(1);
+      var vars = query.split("&");
+      for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == variable) { return pair[1]; }
+      }
+      return (false);
+    }
+
+    /***********************************预言系统代码******************************************/
+    var time = 0;
+    //预言系统 基于交互设计理念 为用户自动补全
+    function propheticWord(tags) {
+      btns = document.getElementsByClassName('btn_normal btn');
+      hintBtns = document.getElementsByClassName('btn_hint btn');
+      while (hintBtns.length != 0) {
+        hintBtns[0].className = 'btn_normal btn';
+      }
+      if (tags.length <= 4 && tags.length >= 1) {
+        matchWordPair = propheticWords.filter(words => {
+          var sliceWords = words.slice(0, tags.length);
+          if (prefixIncludes(sliceWords, tags))
+            return true;
+        })
+        if (matchWordPair.length == 1 && tags.length >= 3) {
+          for (var i = tags.length; i <= 5; i++) {
+            enableWord(btns, hintBtns, matchWordPair[0][i]);
+          }
+        }
+        matchWordPair.forEach(words => hintWord(btns, words[tags.length]));
+      }
+    }
+
+    function hintWord(btns, word) {
+      for (var i = 0; i < btns.length; i++) {
+        if (btns[i].innerText == word) {
+          btns[i].className = 'btn_hint btn';
+          break;
+        }
+      }
+    }
+
+    function enableWord(btn, hintBtns, word) {
+      for (var i = 0; i < btns.length; i++) {
+        if (btns[i].innerText == word) {
+          btns[i].className = 'btn_clicked btn';
+          break;
+        }
+      }
+      for (var i = 0; i < hintBtns.length; i++) {
+        if (hintBtns[i].innerText == word) {
+          hintBtns[i].className = 'btn_clicked btn';
+          break;
+        }
+      }
+      searchAndShow();
+    }
+
+    /***********************************搜索系统代码******************************************/
+    function searchAndShow() {
+      collectSelectedTags();
+      propheticWord(tags);
+      ans = [];
+      searchChara([], 0);
+      sortAns();
+      redrawTable();
+      document.getElementById("anotation").style.display = "none";
+    }
+
+    function collectSelectedTags() {
+      tags = [];
+      var allBtns = document.getElementsByClassName('btn');
+      for (btn of allBtns) {
+        if (btn.className == 'btn_clicked btn') {
+          tags.push(btn.innerHTML);
+        }
+      };
+    }
+
+    function resetAllTags() {
+      console.log('resetAllTags');
+      var arr = document.getElementsByClassName('btn_clicked btn');
+      var arr2 = document.getElementsByClassName('btn_hint btn');
+      while (arr.length != 0) {
+        arr[0].className = 'btn_normal btn';
+      }
+      while (arr2.length != 0) {
+        arr2[0].className = 'btn_normal btn';
+      }
+      tags = [];
+      ans = [];
+      redrawTable();
+    }
+
+    function searchChara(choosedTags, p) {
+      if (choosedTags.length == 3 || p == tags.length) {
+        checkCharaIsMatch(choosedTags);
+        return;
+      }
+      choosedTags.push(tags[p]);
+      searchChara(choosedTags, p + 1);
+      choosedTags.pop();
+      searchChara(choosedTags, p + 1);
+    }
+
+    function checkCharaIsMatch(tags) {
+      var tmpAns = []
+      dataset.forEach(function (value, key, arr) {
+        if (isContain(value, tags)) {
+          var tmp = {}
+          tmp.tags = [...tags];
+          tmp.value = value;
+          tmpAns.push(tmp);
+        }
+      })
+      if (tmpAns.length != 0) {
+        ans.push(tmpAns);
+      }
+    }
+
+    function isContain(arr1, arr2) {
+      if (arr2.length == 0) return false;
+      var isLV3 = arr2.includes("领袖") || arr1.includes("領袖");
+      var isLV2 = arr2.includes("菁英");
+      if (!isLV3 && (arr1.includes("领袖") || arr1.includes("領袖"))){
+        return false;
+      }
+      return prefixIncludes(arr1, arr2);
+    }
+
+    function sortAns() {
+      ans.sort((a, b) => {
+        return countValue(b) - countValue(a);
+      })
+    }
+
+    function countValue(data) {
+      var minLV = data[data.length - 1].value[0].substr(0, 1);
+      var maxLV = data[0].value[0].substr(0, 1);
+      var tagCount = data[0].tags.length;
+      return maxLV + (100 - data.length) + (100 - tagCount);
+    }
+
+    function initDataSet() {
+      dataset.forEach(
+        chara => { for (var i = 0; i < chara.length; i++) { chara[i] = chara[i].replace(/\(.*\)/, "") } }
+      )
+    }
+
+    function prefixIncludes(arr1, arr2) {
+      return arr2.filter(item2 => arr1.find(item1 => item1.startsWith(item2))).length == arr2.length;
+    }
+
+    function lockCharaClick(charaName) {
+      resetAllTags()
+      var charaData;
+      dataset.forEach(chara => {
+        if (chara[0] == charaName) {
+          charaData = chara;
+        }
+      });
+      var allBtns = document.getElementsByClassName('btn');
+      for (btn of allBtns) {
+        if (btn.innerHTML == "菁英") continue;
+        if (charaData.find(tag => tag.startsWith(btn.innerHTML))) {
+          btn.className = 'btn_clicked btn';
+        }
+      };
+      tags.push(this.innerHTML);
+      searchAndShow();
+    }
+
+    /********************************计算结果填充代码************************************/
+
+    function redrawTable() {
+      var tbody = document.getElementById('tbMain');
+      tbody.style.display = "none";
+      var trs = document.getElementsByTagName("tr");
+      for (var i = trs.length - 1; i > 0; i--) {
+        tbody.deleteRow(0);
+      }
+      for (var i = 0; i < ans.length; i++) {
+        var trow = getDataRow(ans[i]);
+        tbody.appendChild(trow);
+      }
+      tbody.style.display = "";
+    }
+
+    function getDataRow(data) {
+      var row = document.createElement('tr');
+
+      var tagCell = document.createElement('td');
+      tagCell.innerHTML = data[0].tags.join('<br/>');
+      row.appendChild(tagCell);
+
+      var nameCell = document.createElement('td');
+      var value = convertCharaDataToColorfulString(data);
+      nameCell.innerHTML = value;
+      row.appendChild(nameCell);
+
+      return row;
+    }
+
+    function convertCharaDataToColorfulString(data) {
+      var value = "";
+      for (var i = 0; i < data.length; i++) {
+        value += "<div style=\"color:";
+        if (data[i].value[0].startsWith("3"))
+          value += "#b8860b\">";
+        if (data[i].value[0].startsWith("2"))
+          value += "#D87093\">";
+        if (data[i].value[0].startsWith("1") || data[i].value[0].startsWith("0"))
+          value += "#808080\">";
+        var data2 = data[i].value[1];
+        for (var j = 2; j < data[i].value.length; j++) {
+          if (data[i].value[j].includes("(")) {
+            data2 += ", <font color=\"#0066CC\">" + data[i].value[j] + "</font>";
+          } else {
+            data2 += ", " + data[i].value[j];
+          }
+        }
+        var charName =  data[i].value[0].split('[')[0];
+        value += "<u style=\"cursor:pointer\" onClick=\"lockCharaClick('" + data[i].value[0] + "')\">" +
+          charName + "</u> (" + data2 + ")</div>"
+      }
+      return value;
+    }
+
+    /********************************数据集合**********************************************/
+    var dataset = [
+      ["3☆魔王 巴尔[101]", "领袖", "火属性", "魔族", "中体型", "攻击者", "爆发力", "输出"],
+      ["3☆魔王 撒旦[102]", "领袖", "闇属性", "魔族", "中体型", "守护者", "生存力", "回击", "防御"],
+      ["3☆精灵王 赛露西亚[104]", "领袖", "风属性", "亚人", "中体型", "巨乳(?)", "辅助者", "爆发力", "支援"],
+      ["3☆矮人王 兰儿[105]", "领袖", "水属性", "亚人", "小体型", "贫乳", "攻击者", "爆发力", "输出"],
+      ["3☆法斯公主 露露[106]", "领袖", "风属性", "人类", "治疗者", "回复"],
+      ["3☆魔王 伊布力斯[103]", "领袖", "光属性", "魔族", "中体型", "攻击者", "生存力", "输出"],
+      ["3☆蛇女之后 梅斯米奈雅[137]", "领袖", "火属性", "妨碍者", "爆发力", "贫乳", "魔族", "干扰(?)", "削弱", "中体型"],
+      ["3☆KS-VIII 魔人偶[131]", "闇属性", "攻击者", "领袖", "爆发力", "输出", "中体型"],
+      ["3☆煌星 妲斯艾菲娜[157]", "闇属性", "辅助者", "领袖", "人类", "中体型", "贫乳", "支援"],
+      ["3☆复生公主 千鹤[128]", "风属性", "攻击者", "领袖", "爆发力", "输出", "中体型", "魔族"],
+      ["3☆天使长 圣米勒[107]", "光属性", "中体型", "攻击者", "领袖", "亚人(?)", "支援", "输出(?)", "爆发力(?)"],
+      ["3☆千年血族 洛缇亚[139]", "闇属性", "攻击者", "魔族", "中体型", "领袖", "巨乳(?)", "输出", "爆发力"],
+      ["3☆食梦 阿尔蒂雅[133]", "闇属性", "妨碍者", "亚人", "领袖", "贫乳", "干扰(?)", "削弱", "中体型"],
+      ["3☆堕龙 凯西菲娜", "水属性", "守护者", "领袖", "亚人", "中体型", "巨乳", "防御", "回击", "生存力(?)"],
+      ["3☆极乐之鬼 伊吹朱点", "火属性", "攻击者", "领袖", "中体型", "输出", "亚人", "贫乳"],
+      ["3☆音速魅影 祈", "风属性", "攻击者", "亚人", "中体型", "领袖", "输出", "爆发力"],
+
+      ["2☆魔管家 艾可[209]", "菁英", "闇属性", "魔族", "辅助者", "中体型", "美乳", "支援"],
+      ["2☆圣骑士长 雷欧娜[210]", "菁英", "水属性", "人类", "守护者", "美乳", "中体型", "生存力", "保护", "防御"],
+      ["2☆神官长 菲欧菈[211]", "菁英", "光属性", "人类", "治疗者", "美乳", "中体型", "回复"],
+      ["2☆女忍者 凛月[212]", "菁英", "风属性", "人类", "攻击者", "美乳", "中体型", "输出", "群体攻击", "爆发力"],
+      ["2☆剑圣 神无雪[213]", "菁英", "火属性", "亚人", "攻击者", "美乳", "中体型", "越战越强", "削弱"],
+      ["2☆妖狐 静[214]", "菁英", "水属性", "美乳", "妨碍者", "亚人", "小体型", "削弱", "干扰"],
+      ["2☆大将军 朱诺安[215]", "菁英", "闇属性", "人类", "攻击者", "巨乳", "中体型", "输出", "支援"],
+      ["2☆天才女军师 布兰妮[216]", "菁英", "光属性", "人类", "妨碍者", "美乳", "中体型", "群体攻击", "削弱", "爆发力", "支援"],
+      ["2☆史莱姆女王 娜芙拉拉[236]", "菁英", "风属性", "魔族", "守护者", "巨乳", "中体型", "保护", "防御", "生存力", "回复"],
+      ["2☆魔法少女 托特拉[238]", "菁英", "光属性", "攻击者", "中体型", "人类", "爆发力", "美乳", "削弱", "输出"],
+      ["2☆最后的银龙 普利特拉", "闇属性", "菁英", "妨碍者", "亚人", "中体型", "削弱", "美乳"],
+      ["2☆刺针 嘉维尔", "风属性", "攻击者", "菁英", "美乳", "人类", "中体型", "输出"],
+
+      ["1☆流浪魔法师 尤依[307]", "火属性", "攻击者", "人类", "巨乳", "小体型", "越战越强", "输出"],
+      ["1☆龙女 伊维斯[303]", "火属性", "攻击者", "亚人", "贫乳", "小体型", "越战越强", "群体攻击", "输出"],
+      ["1☆猫妖 娜娜[302]", "风属性", "攻击者", "魔族", "贫乳", "小体型", "输出"],
+      ["1☆美人鱼 玛莲[306]", "水属性", "治疗者", "亚人", "美乳", "中体型", "回复"],
+      ["1☆犬人族 朵拉[304]", "风属性", "守护者", "亚人", "美乳", "保护", "生存力", "中体型", "防御"],
+      ["1☆双蛇军团护士长 艾琳[301]", "光属性", "治疗者", "人类", "巨乳", "中体型", "回复"],
+      ["1☆魅魔 撒芭丝[305]", "闇属性", "妨碍者", "魔族", "美乳", "干扰", "削弱", "中体型"],
+      ["1☆闇黑精灵 索拉卡[308]", "闇属性", "妨碍者", "亚人", "中体型", "削弱", "美乳"],
+
+      ["0☆法斯帝国法师 佩托拉[402]", "光属性", "攻击者", "人类", "贫乳", "中体型", "群体攻击", "输出", "士兵"],
+      ["0☆矮人战士 可儿[408]", "水属性", "攻击者", "亚人", "贫乳", "小体型", "输出", "爆发力", "士兵"],
+      ["0☆精灵射手 奥菈[407]", "风属性", "攻击者", "亚人", "美乳", "中体型", "输出", "士兵"],
+      ["0☆魔族法师 玛努艾拉[404]", "闇属性", "攻击者", "中体型", "魔族", "美乳", "输出", "士兵"],
+      ["0☆烈日国武士 桔梗[405]", "火属性", "妨碍者", "人类", "美乳", "中体型", "削弱", "士兵"],
+      ["0☆蛇女 拉米亚[414]", "火属性", "妨碍者", "美乳", "中体型", "削弱", "干扰", "士兵"],
+      ["0☆史莱姆娘 萝尔[412]", "水属性", "妨碍者", "魔族", "美乳", "小体型", "削弱", "生存力", "士兵", "回复"],
+      ["0☆鸟身女妖 哈比[415]", "风属性", "妨碍者", "魔族", "美乳", "中体型", "干扰", "士兵"],
+      ["0☆法斯帝国士兵 赛莲[401]", "闇属性", "守护者", "人类", "美乳", "中体型", "保护", "防御", "士兵"],
+      ["0☆牛女 米诺[413]", "风属性", "守护者", "亚人", "巨乳", "中体型", "干扰", "保护", "防御", "生存力", "士兵"],
+      ["0☆魔族战士 芙蕾[403]", "光属性", "守护者", "魔族", "美乳", "中体型", "保护", "士兵", "防御"],
+      ["0☆圣光骑士 玛蒂娜[410]", "光属性", "守护者", "人类", "美乳", "中体型", "保护", "生存力", "防御", "士兵"],
+      ["0☆双蛇军团士兵 夏琳[409]", "火属性", "守护者", "人类", "美乳", "中体型", "防御", "群体攻击", "保护", "士兵"],
+      ["0☆烈日国巫女 枫[406]", "风属性", "治疗者", "人类", "美乳", "中体型", "回复", "士兵"],
+      ["0☆主神教团僧兵 克蕾雅[411]", "光属性", "治疗者", "人类", "美乳", "中体型", "回复", "士兵"],
+      ["0☆试做机三号[422]", "光属性", "攻击者", "小体型", "士兵", "美乳", "输出", "生存力"],
+      ["0☆法斯菁英近卫 安娜[416]", "火属性", "守护者", "人类", "中体型", "防御", "士兵", "保护", "美乳"],
+      ["0☆法斯高阶法师 诺诺可[418]", "水属性", "攻击者", "人类", "中体型", "美乳", "输出", "士兵", "爆发力"],
+      ["0☆法斯精锐骑士 布兰[417]", "风属性", "攻击者", "人类", "中体型", "美乳", "输出", "防御", "士兵"],
+      ["0☆惩戒天使[419]", "水属性", "守护者", "士兵", "生存力", "中体型", "回击", "群体攻击", "美乳", "亚人"],
+      ["0☆福音天使[420]", "水属性", "治疗者", "士兵", "保护", "美乳", "中体型"],
+    ]
+
+    var propheticWords = ["中体型,亚人,削弱,回击,领袖",
+      "中体型,回复,输出,妨碍者,美乳",
+      "中体型,小体型,美乳,火属性,守护者",
+      "中体型,闇属性,回复,守护者,光属性",
+      "中体型,水属性,治疗者,攻击者,亚人",
+      "中体型,风属性,士兵,亚人,防御",
+      "亚人,攻击者,风属性,生存力,保护",
+      "亚人,美乳,攻击者,小体型,中体型",
+      "人类,回复,治疗者,小体型,攻击者",
+      "人类,守护者,巨乳,保护,攻击者",
+      "人类,守护者,生存力,干扰,群体攻击",
+      "人类,守护者,领袖,水属性,贫乳",
+      "人类,巨乳,群体攻击,防御,输出",
+      "人类,攻击者,群体攻击,输出,风属性",
+      "人类,治疗者,越战越强,群体攻击,干扰",
+      "人类,爆发力,群体攻击,保护,小体型",
+      "人类,群体攻击,生存力,治疗者,亚人",
+      "保护,攻击者,输出,光属性,闇属性",
+      "保护,闇属性,越战越强,贫乳,守护者",
+      "光属性,保护,闇属性,贫乳,防御",
+      "光属性,攻击者,贫乳,士兵,小体型",
+      "削弱,妨碍者,闇属性,人类,生存力",
+      "削弱,巨乳,亚人,魔族,回复",
+      "回击,支援,辅助者,领袖,光属性",
+      "回复,中体型,人类,贫乳,守护者",
+      "回复,亚人,闇属性,美乳,风属性",
+      "回复,巨乳,人类,输出,干扰",
+      "回复,干扰,小体型,水属性,群体攻击",
+      "回复,攻击者,治疗者,贫乳,中体型",
+      "回复,攻击者,魔族,群体攻击,治疗者",
+      "回复,魔族,亚人,小体型,水属性",
+      "士兵,削弱,保护,输出,贫乳",
+      "士兵,妨碍者,削弱,魔族,守护者",
+      "士兵,干扰,人类,群体攻击,回复",
+      "妨碍者,干扰,巨乳,士兵,治疗者",
+      "妨碍者,攻击者,魔族,输出,贫乳",
+      "守护者,妨碍者,魔族,贫乳,攻击者",
+      "守护者,攻击者,中体型,生存力,风属性",
+      "守护者,治疗者,风属性,群体攻击,巨乳",
+      "小体型,回复,防御,妨碍者,火属性",
+      "巨乳,光属性,士兵,闇属性,越战越强",
+      "巨乳,守护者,小体型,输出,攻击者",
+      "巨乳,干扰,魔族,贫乳,群体攻击",
+      "干扰,光属性,治疗者,生存力,闇属性",
+      "干扰,妨碍者,支援,小体型,守护者",
+      "干扰,巨乳,闇属性,风属性,群体攻击",
+      "支援,治疗者,妨碍者,小体型,辅助者",
+      "攻击者,保护,爆发力,小体型,输出",
+      "攻击者,干扰,守护者,防御,光属性",
+      "攻击者,生存力,越战越强,守护者,小体型",
+      "攻击者,防御,治疗者,群体攻击,输出",
+      "攻击者,魔族,人类,中体型,干扰",
+      "闇属性,回复,输出,中体型,妨碍者",
+      "闇属性,攻击者,保护,光属性,士兵",
+      "闇属性,水属性,妨碍者,生存力,输出",
+      "闇属性,火属性,削弱,支援,魔族",
+      "闇属性,生存力,保护,妨碍者,小体型",
+      "闇属性,生存力,水属性,输出,风属性",
+      "闇属性,美乳,回复,魔族,贫乳",
+      "闇属性,美乳,小体型,防御,贫乳",
+      "闇属性,贫乳,保护,魔族,治疗者",
+      "水属性,回复,治疗者,贫乳,光属性",
+      "火属性,保护,守护者,士兵,生存力",
+      "火属性,群体攻击,小体型,魔族,防御",
+      "火属性,贫乳,输出,干扰,光属性",
+      "爆发力,闇属性,群体攻击,妨碍者,人类",
+      "生存力,亚人,守护者,治疗者,削弱",
+      "生存力,人类,魔族,妨碍者,水属性",
+      "生存力,守护者,防御,攻击者,风属性",
+      "生存力,小体型,治疗者,风属性,输出",
+      "生存力,水属性,巨乳,魔族,回复",
+      "生存力,贫乳,小体型,输出,魔族",
+      "美乳,人类,中体型,水属性,魔族",
+      "美乳,治疗者,防御,水属性,爆发力",
+      "群体攻击,中体型,闇属性,巨乳,保护",
+      "群体攻击,攻击者,输出,闇属性,水属性",
+      "群体攻击,魔族,闇属性,光属性,治疗者",
+      "菁英,光属性,回复,人类,治疗者",
+      "贫乳,中体型,防御,美乳,小体型",
+      "贫乳,人类,干扰,魔族,水属性",
+      "贫乳,士兵,巨乳,光属性,闇属性",
+      "贫乳,攻击者,守护者,治疗者,火属性",
+      "贫乳,攻击者,生存力,美乳,输出",
+      "贫乳,水属性,攻击者,光属性,亚人",
+      "贫乳,治疗者,干扰,美乳,防御",
+      "越战越强,人类,亚人,贫乳,士兵",
+      "越战越强,防御,守护者,风属性,水属性",
+      "辅助者,妨碍者,防御,攻击者,水属性",
+      "输出,保护,守护者,治疗者,群体攻击",
+      "输出,妨碍者,治疗者,回复,风属性",
+      "输出,干扰,魔族,风属性,美乳",
+      "输出,爆发力,守护者,火属性,闇属性",
+      "防御,亚人,火属性,守护者,输出",
+      "防御,守护者,人类,攻击者,火属性",
+      "防御,干扰,魔族,风属性,闇属性",
+      "防御,群体攻击,守护者,回复,风属性",
+      "领袖,爆发力,亚人,回复,治疗者",   //新的
+      "风属性,回复,水属性,攻击者,越战越强",
+      "风属性,闇属性,守护者,治疗者,火属性",
+      "魔族,中体型,小体型,水属性,输出",
+      "魔族,亚人,风属性,守护者,生存力",
+      "魔族,人类,输出,妨碍者,中体型",
+      "魔族,保护,闇属性,火属性,美乳",
+      "魔族,妨碍者,水属性,攻击者,生存力",
+      "领袖,攻击者,爆发力,闇属性,治疗者",
+      "巨乳,中体型,攻击者,人类,保护",//下面都是新的
+      "人类,菁英,水属性,亚人,群体攻击",
+      "守护者,爆发力,小体型,中体型,攻击者",
+      "中体型,群体攻击,输出,贫乳,越战越强",
+      "美乳,闇属性,群体攻击,贫乳,妨碍者",
+      "干扰,攻击者,群体攻击,越战越强,守护者",
+      "干扰,小体型,风属性,爆发力,越战越强",
+      "保护,菁英,群体攻击,防御,风属性",
+      "保护,小体型,回复,守护者,亚人",
+      "输出,群体攻击,巨乳,辅助者,美乳",
+      "火属性,巨乳,越战越强,生存力,群体攻击",
+      "妨碍者,领袖,魔族,输出,火属性",
+      "群体攻击,妨碍者,回复,人类,守护者",
+      "保护,光属性,越战越强,干扰,人类",
+      "削弱,士兵,群体攻击,贫乳,光属性",
+      "治疗者,生存力,魔族,输出,防御",
+      "水属性,越战越强,小体型,人类,火属性",
+      "人类,回复,美乳,火属性,风属性",
+      "菁英,攻击者,输出,魔族,越战越强",
+      "生存力,治疗者,美乳,爆发力,士兵",
+      "越战越强,火属性,守护者,亚人,治疗者",
+      "魔族,保护,回复,贫乳,守护者",
+      "输出,士兵,水属性,保护,美乳",
+      "水属性,越战越强,美乳,爆发力,巨乳",
+      "魔族,中体型,回复,支援,水属性",
+      "回复,妨碍者,中体型,干扰,小体型",
+      "爆发力,越战越强,小体型,闇属性,风属性",
+      "防御,攻击者,人类,巨乳,爆发力",
+      "攻击者,保护,回复,火属性,治疗者",
+      "越战越强,干扰,群体攻击,中体型,生存力", //10.27
+      "攻击者,支援,守护者,火属性,魔族",
+      "辅助者,风属性,菁英,输出,美乳",
+      "小体型,亚人,攻击者,妨碍者,削弱", //10.29
+      "火属性,保护,治疗者,妨碍者,回复",  //11.1
+      "魔族,生存力,领袖,爆发力,治疗者",  //11.11
+      "干扰,辅助者,生存力,风属性,亚人",
+      "守护者,回复,光属性,中体型,生存力",
+      "守护者,输出,巨乳,水属性,贫乳",   //11.17
+      "输出,闇属性,防御,削弱,水属性",
+      "贫乳,防御,辅助者,领袖,回复", //11.23
+      "妨碍者,魔族,削弱,防御,越战越强",   //12.1
+      "削弱,光属性,菁英,巨乳,闇属性",  //12.30
+      "中体型,贫乳,人类,攻击者,领袖",//2.1附近
+      "输出,领袖,守护者,亚人,妨碍者",  //4.12
+      "防御,火属性,越战越强,治疗者,回复"//4.25
+    ];
+
+
+  
+  //<body style="background:rgb(221, 241, 220)" id="body">
+  </script>
+  <script type="text/javascript" language="javascript" src="transform.js"></script>
+
+<body style="background:rgb(230, 230, 250)" id="body">
+
+  <div id="center_box">
+    <h1 style="display: inline;">全境征才计算器 3.9 by 小r</h1><small>邀请码 USHL2U</small>
+    <button type="button" id="langSwitcher" class="btn_language" onclick="switchST()">繁简切换</button>
+    <br />
+
+    <button type="button" class='btn_normal btn'>攻击者</button>
+    <button type="button" class='btn_normal btn'>守护者</button>
+    <button type="button" class='btn_normal btn'>辅助者</button>
+    <button type="button" class='btn_normal btn'>治疗者</button>
+    <button type="button" class='btn_normal btn'>妨碍者</button>
+    <br>
+    <button type="button" class='btn_normal btn'>魔族</button>
+    <button type="button" class='btn_normal btn'>亚人</button>
+    <button type="button" class='btn_normal btn'>人类</button>
+    <br>
+    <button type="button" class='btn_normal btn'>贫乳</button>
+    <button type="button" class='btn_normal btn'>美乳</button>
+    <button type="button" class='btn_normal btn'>巨乳</button>
+    <br>
+    <button type="button" class='btn_normal btn'>小体型</button>
+    <button type="button" class='btn_normal btn'>中体型</button>
+    <br>
+    <button type="button" class='btn_normal btn'>水属性</button>
+    <button type="button" class='btn_normal btn'>火属性</button>
+    <button type="button" class='btn_normal btn'>风属性</button>
+    <button type="button" class='btn_normal btn'>光属性</button>
+    <button type="button" class='btn_normal btn'>闇属性</button>
+    <br>
+    <button type="button" class='btn_normal btn'>回复</button>
+    <button type="button" class='btn_normal btn'>输出</button>
+    <button type="button" class='btn_normal btn'>削弱</button>
+    <button type="button" class='btn_normal btn'>干扰</button>
+    <button type="button" class='btn_normal btn'>保护</button>
+    <button type="button" class='btn_normal btn'>士兵</button>
+    <button type="button" class='btn_normal btn'>防御</button>
+    <button type="button" class='btn_normal btn'>支援</button>
+    <button type="button" class='btn_normal btn'>爆发力</button>
+    <button type="button" class='btn_normal btn'>生存力</button>
+    <button type="button" class='btn_normal btn'>群体攻击</button>
+    <button type="button" class='btn_normal btn'>越战越强</button>
+    <br>
+    <button type="button" class='btn_normal btn'>领袖</button>
+    <button type="button" class='btn_normal btn'>菁英</button>
+    <button type="button" class='btn_normal btn'>回击</button>
+    <br>
+    <button type="button" class="btn_resetAllTags btn" onclick="resetAllTags()">重置选择</button>
+    <br>
+
+    <table border="1" cellspacing="0">
+      <thead>
+        <tr>
+          <th>选择</th>
+          <th>角色清单</th>
+        </tr>
+      </thead>
+      <tbody id="tbMain"></tbody>
+    </table>
+
+    <div id="anotation">
+      <h1>曝光黑店：好再来游戏氪金商城</h1>
+      该商店会在用户购买点卡后，偷偷将用户点卡拿去官网兑换积分。导致用户自己没法兑换。也就是每单多薅1%的羊毛。<br/>
+
+      兑换积分教程：<a href=https://nga.178.com/read.php?tid=32215278">访问地址</a><br/>
+      工口服非常便宜（88折）的充值教程：<a href=https://nga.178.com/read.php?tid=31897610">访问地址</a><br/>
+      <h1><font color="red">NGA论坛天下布魔板块已经正式开放了</font>，<a href="https://nga.178.com/thread.php?fid=-40525887">访问地址</a></h1>
+
+     之前的<a href="https://github.com/RShock/RShock.github.io/blob/master/update.md">更新日志</a><br />
+   </div>
+  </div>
+</body>
+
+</html>
